@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitación a comer taquitos</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    #container {
+      position: relative;
+    }
+
+    #invitation-header {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #green-button {
+      background-color: #4caf50;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #red-button {
+      position: absolute;
+      background-color: #ff0000;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="container">
+  <img src="https://i.pinimg.com/originals/02/86/d2/0286d2d14e7d5c55ea4fc64da3a7ec87.gif" alt="Imagen de taquitos">
+  <div id="invitation-header">¿Quieres comer taquitos conmigo?</div>
+  <button id="green-button" onclick="showPopup()">Sí, quiero amor</button>
+  <button id="red-button" onmouseover="moveButton()">No, gracias</button>
+</div>
+
+<script>
+  function showPopup() {
+    alert("Entonces te espero el miércoles a las 4 pm en mi casa, y no te preocupes, yo te llevo de vuelta a tu casa, bebé.");
+  }
+
+  function moveButton() {
+    var redButton = document.getElementById("red-button");
+    var container = document.getElementById("container");
+
+    var maxX = container.clientWidth - redButton.clientWidth;
+    var maxY = container.clientHeight - redButton.clientHeight;
+
+    var newX = Math.floor(Math.random() * maxX);
+    var newY = Math.floor(Math.random() * maxY);
+
+    redButton.style.left = newX + "px";
+    redButton.style.top = newY + "px";
+  }
+</script>
+
+</body>
+</html>
