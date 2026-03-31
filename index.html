@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purse — Dashboard Personal</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0c0b12;--card:#16151f;--card-hover:#1c1b28;--border:#252435;
+  --text:#eeedf5;--text-sec:#7d7b93;--text-dim:#4a4862;
+  --accent:#8b5cf6;--accent-glow:#8b5cf660;--accent2:#f97316;--accent3:#10b981;--accent4:#f472b6;
+  --danger:#ef4444;--warn:#f59e0b;--success:#10b981;
+  --input-bg:#0f0e17;--sidebar-bg:#111019;--sidebar-w:230px;
+  --radius:14px;--radius-sm:10px;--radius-xs:7px;
+  --shadow:0 4px 24px rgba(0,0,0,0.35);
+  --font-display:'Outfit',sans-serif;--font-body:'Libre Franklin',sans-serif;
+  --transition:0.22s cubic-bezier(.4,0,.2,1);
+}
+.light{
+  --bg:#f6f4fb;--card:#ffffff;--card-hover:#faf8ff;--border:#e6e2f0;
+  --text:#1a1830;--text-sec:#6e6b85;--text-dim:#a5a2b8;
+  --input-bg:#f0edf8;--sidebar-bg:#ffffff;
+  --shadow:0 4px 24px rgba(100,80,160,0.08);
+}
+
+html{font-size:15px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:hidden;transition:background var(--transition),color var(--transition)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+
+/* ─── Sidebar ─── */
+#sidebar{
+  width:var(--sidebar-w);min-height:100vh;background:var(--sidebar-bg);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  transition:width var(--transition),background var(--transition);overflow:hidden;flex-shrink:0;z-index:50;
+}
+#sidebar.collapsed{--sidebar-w:62px;width:62px}
+.sidebar-brand{padding:20px 18px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border)}
+.sidebar-brand .logo{
+  width:34px;height:34px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,#8b5cf6,#f97316);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-family:var(--font-display);font-weight:800;font-size:17px;flex-shrink:0;
+}
+.sidebar-brand span{font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:-.6px;white-space:nowrap}
+#sidebar.collapsed .sidebar-brand span,#sidebar.collapsed .nav-label{display:none}
+#sidebar.collapsed .nav-btn{justify-content:center;padding:11px}
+
+.sidebar-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-btn{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-sm);
+  border:none;background:transparent;color:var(--text-sec);font-size:.9rem;font-weight:500;
+  cursor:pointer;transition:all var(--transition);font-family:var(--font-body);white-space:nowrap;
+}
+.nav-btn:hover{background:var(--card);color:var(--text)}
+.nav-btn.active{background:rgba(139,92,246,.12);color:var(--accent);font-weight:600}
+.nav-btn svg{flex-shrink:0}
+.sidebar-footer{padding:10px 8px;border-top:1px solid var(--border)}
+
+/* ─── Main ─── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 28px;border-bottom:1px solid var(--border);background:var(--sidebar-bg);
+  transition:background var(--transition);
+}
+#header h2{font-family:var(--font-display);font-size:1.35rem;font-weight:700}
+.header-actions{display:flex;align-items:center;gap:10px}
+.icon-btn{
+  width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text-sec);transition:all var(--transition);
+}
+.icon-btn:hover{background:var(--card);color:var(--text)}
+.avatar{
+  width:36px;height:36px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--accent),var(--accent4));
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:var(--font-display);font-weight:700;font-size:.85rem;
+}
+
+#content{flex:1;overflow-y:auto;padding:24px 28px;transition:background var(--transition)}
+.page{display:none;animation:fadeUp .3s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── Cards & Grid ─── */
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+
+.card{
+  background:var(--card);border-radius:var(--radius);padding:20px;
+  border:1px solid var(--border);transition:all var(--transition);
+}
+.card:hover{border-color:var(--text-dim)}
+.card-title{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:14px}
+
+/* ─── KPI ─── */
+.kpi{display:flex;flex-direction:column;gap:10px}
+.kpi-icon{width:42px;height:42px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.kpi-value{font-family:var(--font-display);font-size:1.6rem;font-weight:700}
+.kpi-label{font-size:.82rem;color:var(--text-sec)}
+
+/* ─── Buttons ─── */
+.btn{
+  padding:9px 18px;border-radius:var(--radius-sm);border:none;font-size:.85rem;
+  font-weight:600;cursor:pointer;transition:all var(--transition);font-family:var(--font-body);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.btn-primary{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff}
+.btn-primary:hover{box-shadow:0 4px 16px var(--accent-glow);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{background:var(--card)}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.btn-icon{
+  width:30px;height:30px;border-radius:var(--radius-xs);border:none;
+  background:transparent;cursor:pointer;color:var(--text-sec);
+  display:flex;align-items:center;justify-content:center;transition:all var(--transition);
+}
+.btn-icon:hover{background:var(--card-hover);color:var(--text)}
+.btn-icon.danger:hover{color:var(--danger)}
+
+/* ─── Chips / Tags ─── */
+.chip{
+  display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
+  font-size:.72rem;font-weight:600;
+}
+.chip-filter{
+  padding:6px 14px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--text-sec);font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:all var(--transition);font-family:var(--font-body);
+}
+.chip-filter.active{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;border-color:transparent}
+
+/* ─── Items / Rows ─── */
+.item-row{
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border);transition:background var(--transition);
+}
+.item-row:last-child{border-bottom:none}
+.checkbox{
+  width:22px;height:22px;border-radius:6px;border:2px solid var(--border);
+  background:transparent;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;transition:all var(--transition);
+}
+.checkbox.checked{background:var(--success);border-color:var(--success)}
+.checkbox.checked::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+
+.priority-bar{width:4px;height:36px;border-radius:2px;flex-shrink:0}
+
+/* ─── Progress bar ─── */
+.progress-track{height:6px;border-radius:3px;background:var(--border);overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s ease}
+
+/* ─── Modal ─── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(5px)}
+.modal{
+  position:relative;background:var(--card);border-radius:var(--radius);padding:28px;
+  width:460px;max-width:92vw;max-height:85vh;overflow-y:auto;
+  box-shadow:0 30px 70px rgba(0,0,0,.4);border:1px solid var(--border);
+  animation:modalIn .25s ease;
+}
+.modal.wide{width:600px}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-header h3{font-family:var(--font-display);font-size:1.1rem;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-sec);padding:4px}
+.modal-close:hover{color:var(--text)}
+
+/* ─── Form ─── */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--text-sec);margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:10px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--input-bg);color:var(--text);
+  font-size:.9rem;font-family:var(--font-body);outline:none;transition:border var(--transition);
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:70px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-check{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;color:var(--text-sec)}
+.field-check input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+
+/* ─── Empty state ─── */
+.empty{text-align:center;padding:50px 20px;color:var(--text-dim)}
+.empty-icon{font-size:3rem;margin-bottom:10px;opacity:.4}
+.empty-text{font-size:.95rem}
+
+/* ─── Meal cards ─── */
+.meal-section{background:var(--card);border-radius:var(--radius);padding:18px;border:1px solid var(--border)}
+.meal-section h4{font-family:var(--font-display);font-weight:700;font-size:.95rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* ─── Gym routine card ─── */
+.routine-card{
+  background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:12px;margin-bottom:10px;
+}
+.exercise-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.85rem;color:var(--text-sec)}
+
+/* ─── Project expandable ─── */
+.project-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:10px;transition:border var(--transition)}
+.project-card:hover{border-color:var(--text-dim)}
+.project-header{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;transition:background var(--transition)}
+.project-header:hover{background:var(--card-hover)}
+.project-body{padding:0 20px 16px;border-top:1px solid var(--border)}
+
+/* ─── Budget bars ─── */
+.budget-item{margin-bottom:14px}
+.budget-meta{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px}
+
+/* ─── Chart container ─── */
+.chart-wrap{position:relative;height:220px}
+
+/* ─── Analytics grid ─── */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.analytics-full{grid-column:1/-1}
+
+/* Responsive */
+@media(max-width:768px){
+  #sidebar{position:fixed;left:-230px;z-index:100}
+  #sidebar.mobile-open{left:0}
+  #sidebar.collapsed{left:-62px}
+  .analytics-grid{grid-template-columns:1fr}
+  #content{padding:16px}
+}
+
+/* Subtle gradient bg effect */
+body::before{
+  content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(ellipse at 30% 20%,rgba(139,92,246,.04),transparent 50%),
+             radial-gradient(ellipse at 70% 80%,rgba(249,115,22,.03),transparent 50%);
+  pointer-events:none;z-index:0;
+}
+body>*{position:relative;z-index:1}
+</style>
+</head>
+<body>
+
+<!-- ─── Sidebar ─── -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">P</div>
+    <span>Purse</span>
+  </div>
+  <div class="sidebar-nav" id="navBtns"></div>
+  <div class="sidebar-footer">
+    <button class="nav-btn" onclick="toggleSidebar()" title="Colapsar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span class="nav-label">Colapsar</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ─── Main ─── -->
+<div id="main">
+  <header id="header">
+    <h2 id="pageTitle">Dashboard</h2>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Cambiar tema">☀️</button>
+      <div class="avatar">U</div>
+    </div>
+  </header>
+  <div id="content">
+
+    <!-- Dashboard Page -->
+    <div class="page active" id="page-dashboard"></div>
+
+    <!-- Tasks Page -->
+    <div class="page" id="page-tasks"></div>
+
+    <!-- Projects Page -->
+    <div class="page" id="page-projects"></div>
+
+    <!-- Meals Page -->
+    <div class="page" id="page-meals"></div>
+
+    <!-- Gym Page -->
+    <div class="page" id="page-gym"></div>
+
+    <!-- Finance Page -->
+    <div class="page" id="page-finance"></div>
+
+    <!-- Analytics Page -->
+    <div class="page" id="page-analytics"></div>
+
+  </div>
+</div>
+
+<!-- ─── Modal Container ─── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════
+const STORAGE_KEY = 'purse-dash-v2';
+let DATA = { tasks:[], projects:[], meals:[], routines:[], finances:[], budgets:[] };
+
+async function loadData() {
+  try {
+    const r = await window.storage.get('purse-data-html');
+    if (r && r.value) DATA = JSON.parse(r.value);
+  } catch(e) {
+    try { const raw = localStorage.getItem(STORAGE_KEY); if(raw) DATA = JSON.parse(raw); } catch{}
+  }
+}
+async function saveData() {
+  try { await window.storage.set('purse-data-html', JSON.stringify(DATA)); } catch {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); } catch{}
+}
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const todayStr = () => new Date().toISOString().split('T')[0];
+const currentMonth = () => todayStr().slice(0,7);
+
+const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const TAGS = ['Personal','Trabajo','Rutina','Proyecto'];
+const TAG_COLORS = {Personal:'#8b5cf6',Trabajo:'#f97316',Rutina:'#10b981',Proyecto:'#f472b6'};
+const PRIORITIES = ['Alta','Media','Baja'];
+const PRIO_COLORS = {Alta:'#ef4444',Media:'#f59e0b',Baja:'#22c55e'};
+const STATUSES = ['Pendiente','En progreso','Completado'];
+const MEAL_TYPES = ['Desayuno','Almuerzo','Cena','Snacks'];
+const MEAL_ICONS = {Desayuno:'☀️',Almuerzo:'🌤️',Cena:'🌙',Snacks:'🍿'};
+const EXP_CATS = ['Comida','Compras','Educación','Transporte','Entretenimiento','Salud','Hogar','Otros'];
+const CAT_ICONS = {Comida:'🛒',Compras:'🛍️',Educación:'📚',Transporte:'🚗',Entretenimiento:'🎵',Salud:'💊',Hogar:'🏠',Otros:'📦'};
+const CAT_COLORS = ['#8b5cf6','#f97316','#10b981','#f472b6','#facc15','#38bdf8','#fb923c','#a78bfa'];
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const NAV = [
+  {id:'dashboard',label:'Dashboard',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'},
+  {id:'tasks',label:'Tareas',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'},
+  {id:'projects',label:'Proyectos',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>'},
+  {id:'meals',label:'Comidas',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>'},
+  {id:'gym',label:'Gimnasio',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>'},
+  {id:'finance',label:'Finanzas',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'},
+  {id:'analytics',label:'Analítica',icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'},
+];
+
+let currentPage = 'dashboard';
+
+function initNav() {
+  const c = document.getElementById('navBtns');
+  c.innerHTML = NAV.map(n =>
+    `<button class="nav-btn${n.id===currentPage?' active':''}" onclick="navigate('${n.id}')" data-nav="${n.id}">
+      ${n.icon}<span class="nav-label">${n.label}</span>
+    </button>`
+  ).join('');
+}
+
+function navigate(id) {
+  currentPage = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn[data-nav]').forEach(b => b.classList.toggle('active', b.dataset.nav===id));
+  document.getElementById('pageTitle').textContent = {dashboard:'Dashboard',tasks:'Tareas',projects:'Proyectos',meals:'Comidas / Nutrición',gym:'Gimnasio',finance:'Finanzas',analytics:'Analítica'}[id];
+  renderPage(id);
+}
+
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('themeBtn').textContent = isDark ? '☀️' : '🌙';
+  if(currentPage==='dashboard'||currentPage==='analytics') renderPage(currentPage);
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ═══════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════
+function openModal(html, wide) {
+  const m = document.getElementById('modalContent');
+  m.innerHTML = html;
+  m.className = wide ? 'modal wide' : 'modal';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════
+// RENDERERS
+// ═══════════════════════════════════════════
+function renderPage(id) {
+  const fns = {dashboard:renderDashboard,tasks:renderTasks,projects:renderProjects,meals:renderMeals,gym:renderGym,finance:renderFinance,analytics:renderAnalytics};
+  if(fns[id]) fns[id]();
+}
+
+// ─── SVG Icons helpers ───
+const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const svgEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const svgTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+const svgPlus = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+const svgChevDown = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+const svgChevRight = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+const svgX = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+let dashCharts = [];
+function renderDashboard() {
+  dashCharts.forEach(c=>c.destroy()); dashCharts=[];
+  const el = document.getElementById('page-dashboard');
+  const completedT = DATA.tasks.filter(t=>t.status==='Completado').length;
+  const totalT = DATA.tasks.length;
+  const activePr = DATA.projects.filter(p=>p.status!=='Completado').length;
+  const income = DATA.finances.filter(f=>f.type==='Ingreso').reduce((s,f)=>s+f.amount,0);
+  const expense = DATA.finances.filter(f=>f.type==='Gasto').reduce((s,f)=>s+f.amount,0);
+  const bal = income-expense;
+  const compRout = DATA.routines.filter(r=>r.completed).length;
+  const totalR = DATA.routines.length;
+  const pctT = totalT ? Math.round(completedT/totalT*100) : 0;
+  const pctR = totalR ? Math.round(compRout/totalR*100) : 0;
+
+  el.innerHTML = `
+    <div class="grid grid-4" style="margin-bottom:20px">
+      <div class="card kpi">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="kpi-icon" style="background:#8b5cf618;color:#8b5cf6">✓</div>
+          <span style="font-size:.82rem;font-weight:600;color:#8b5cf6">${pctT}%</span>
+        </div>
+        <div class="kpi-value">${completedT}/${totalT}</div>
+        <div class="kpi-label">Tareas completadas</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-icon" style="background:#f9731618;color:#f97316">📁</div>
+        <div class="kpi-value">${activePr}</div>
+        <div class="kpi-label">Proyectos activos</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-icon" style="background:${bal>=0?'#10b98118':'#ef444418'};color:${bal>=0?'#10b981':'#ef4444'}">$</div>
+        <div class="kpi-value" style="color:${bal>=0?'#10b981':'#ef4444'}">$${bal.toFixed(2)}</div>
+        <div class="kpi-label">Balance</div>
+      </div>
+      <div class="card kpi">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="kpi-icon" style="background:#f472b618;color:#f472b6">💪</div>
+          <span style="font-size:.82rem;font-weight:600;color:#f472b6">${pctR}%</span>
+        </div>
+        <div class="kpi-value">${compRout}/${totalR}</div>
+        <div class="kpi-label">Rutinas cumplidas</div>
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title">Actividad semanal</div>
+        <div class="chart-wrap"><canvas id="dashActivity"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Gastos por categoría</div>
+        <div class="chart-wrap"><canvas id="dashExpCat"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Transacciones recientes</div>
+      ${DATA.finances.length===0?'<div class="empty"><div class="empty-text">Sin transacciones</div></div>':
+        DATA.finances.slice(-5).reverse().map(f=>`
+          <div class="item-row">
+            <span style="font-size:1.3rem">${f.type==='Ingreso'?'📈':(CAT_ICONS[f.category]||'📦')}</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:.9rem">${esc(f.description)}</div>
+              <div style="font-size:.78rem;color:var(--text-sec)">${f.type==='Ingreso'?esc(f.source||''):esc(f.category||'')} · ${f.date}</div>
+            </div>
+            <span style="font-weight:700;color:${f.type==='Ingreso'?'#10b981':'#ef4444'}">${f.type==='Ingreso'?'+':'-'}$${f.amount.toFixed(2)}</span>
+          </div>
+        `).join('')}
+    </div>
+  `;
+
+  // Weekly activity chart
+  const weekLabels = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  const weekData = DAYS.map((_,i) => DATA.tasks.filter(t => {
+    if(!t.date||t.status!=='Completado') return false;
+    const d = new Date(t.date).getDay(); return (d===0?6:d-1)===i;
+  }).length);
+  const ctx1 = document.getElementById('dashActivity');
+  if(ctx1) {
+    const c1 = new Chart(ctx1, {
+      type:'line',
+      data:{labels:weekLabels,datasets:[{label:'Completadas',data:weekData,borderColor:'#8b5cf6',backgroundColor:'#8b5cf620',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#8b5cf6'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:getCS('--text-sec')},grid:{color:getCS('--border')}},y:{ticks:{color:getCS('--text-sec')},grid:{color:getCS('--border')}}}}
+    });
+    dashCharts.push(c1);
+  }
+
+  // Expense pie
+  const expData = EXP_CATS.map(c => DATA.finances.filter(f=>f.type==='Gasto'&&f.category===c).reduce((s,f)=>s+f.amount,0));
+  const hasExp = expData.some(v=>v>0);
+  const ctx2 = document.getElementById('dashExpCat');
+  if(ctx2 && hasExp) {
+    const c2 = new Chart(ctx2, {
+      type:'doughnut',
+      data:{labels:EXP_CATS,datasets:[{data:expData,backgroundColor:CAT_COLORS,borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:getCS('--text-sec'),boxWidth:12,padding:8,font:{size:11}}}}}
+    });
+    dashCharts.push(c2);
+  } else if(ctx2) {
+    ctx2.parentElement.innerHTML = '<div class="empty"><div class="empty-text">Sin datos de gastos</div></div>';
+  }
+}
+
+// ═══════════════════════════════════════════
+// TASKS
+// ═══════════════════════════════════════════
+let taskFilter = 'Todas';
+function renderTasks() {
+  const el = document.getElementById('page-tasks');
+  const filtered = DATA.tasks.filter(t => taskFilter==='Todas'||t.tag===taskFilter);
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${['Todas',...TAGS].map(t=>`<button class="chip-filter${taskFilter===t?' active':''}" onclick="taskFilter='${t}';renderTasks()">${t}</button>`).join('')}
+      </div>
+      <button class="btn btn-primary" onclick="openTaskModal()">${svgPlus} Nueva tarea</button>
+    </div>
+    ${filtered.length===0?`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No hay tareas</div></div>`:
+      filtered.map(t=>`
+        <div class="item-row" style="border-left:4px solid ${PRIO_COLORS[t.priority]};padding-left:14px;border-radius:${t===filtered[filtered.length-1]?'0 0 var(--radius-xs) var(--radius-xs)':'0'};opacity:${t.status==='Completado'?.55:1}">
+          <div class="checkbox${t.status==='Completado'?' checked':''}" onclick="toggleTask('${t.id}')">${t.status==='Completado'?svgCheck:''}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.9rem;${t.status==='Completado'?'text-decoration:line-through':''}">${esc(t.title)}</div>
+            <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+              <span class="chip" style="background:${TAG_COLORS[t.tag]}20;color:${TAG_COLORS[t.tag]}">${t.tag}</span>
+              <span style="font-size:.75rem;color:var(--text-sec)">${t.date||''}</span>
+              ${t.projectId?`<span style="font-size:.75rem;color:var(--text-sec)">📁 ${esc(DATA.projects.find(p=>p.id===t.projectId)?.name||'')}</span>`:''}
+            </div>
+          </div>
+          <button class="btn-icon" onclick="openTaskModal('${t.id}')">${svgEdit}</button>
+          <button class="btn-icon danger" onclick="deleteTask('${t.id}')">${svgTrash}</button>
+        </div>
+      `).join('')}
+  `;
+}
+
+function openTaskModal(editId) {
+  const t = editId ? DATA.tasks.find(x=>x.id===editId) : null;
+  const projOpts = DATA.projects.map(p=>`<option value="${p.id}"${t&&t.projectId===p.id?' selected':''}>${esc(p.name)}</option>`).join('');
+  openModal(`
+    <div class="modal-header"><h3>${t?'Editar tarea':'Nueva tarea'}</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Título</label><input id="mTitle" value="${t?esc(t.title):''}" placeholder="Nombre de la tarea"></div>
+    <div class="field-row">
+      <div class="field"><label>Etiqueta</label><select id="mTag">${TAGS.map(g=>`<option${t&&t.tag===g?' selected':''}>${g}</option>`).join('')}</select></div>
+      <div class="field"><label>Prioridad</label><select id="mPrio">${PRIORITIES.map(p=>`<option${t&&t.priority===p?' selected':''}>${p}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Estado</label><select id="mStatus">${STATUSES.map(s=>`<option${t&&t.status===s?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>Fecha</label><input type="date" id="mDate" value="${t?t.date:todayStr()}"></div>
+    </div>
+    ${DATA.projects.length?`<div class="field"><label>Proyecto (opcional)</label><select id="mProj"><option value="">Sin proyecto</option>${projOpts}</select></div>`:''}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask('${editId||''}')">${t?'Guardar':'Crear'}</button>
+    </div>
+  `);
+}
+
+function saveTask(editId) {
+  const title = document.getElementById('mTitle').value.trim();
+  if(!title) return;
+  const obj = {
+    title, tag:document.getElementById('mTag').value,
+    priority:document.getElementById('mPrio').value,
+    status:document.getElementById('mStatus').value,
+    date:document.getElementById('mDate').value,
+    projectId: document.getElementById('mProj')?.value||''
+  };
+  if(editId) { DATA.tasks = DATA.tasks.map(t=>t.id===editId?{...t,...obj}:t); }
+  else { DATA.tasks.push({...obj,id:uid()}); }
+  saveData(); closeModal(); renderTasks();
+}
+function toggleTask(id) {
+  DATA.tasks = DATA.tasks.map(t=>t.id===id?{...t,status:t.status==='Completado'?'Pendiente':'Completado'}:t);
+  saveData(); renderTasks();
+}
+function deleteTask(id) { DATA.tasks = DATA.tasks.filter(t=>t.id!==id); saveData(); renderTasks(); }
+
+// ═══════════════════════════════════════════
+// PROJECTS
+// ═══════════════════════════════════════════
+let expandedProjects = {};
+function renderProjects() {
+  const el = document.getElementById('page-projects');
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+      <button class="btn btn-primary" onclick="openProjectModal()">${svgPlus} Nuevo proyecto</button>
+    </div>
+    ${DATA.projects.length===0?'<div class="empty"><div class="empty-icon">📁</div><div class="empty-text">No hay proyectos</div></div>':
+      DATA.projects.map(p => {
+        const tasks = DATA.tasks.filter(t=>t.projectId===p.id);
+        const done = tasks.filter(t=>t.status==='Completado').length;
+        const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+        const exp = expandedProjects[p.id];
+        return `
+          <div class="project-card">
+            <div class="project-header" onclick="expandedProjects['${p.id}']=!expandedProjects['${p.id}'];renderProjects()">
+              ${exp?svgChevDown:svgChevRight}
+              <div style="flex:1">
+                <div style="font-family:var(--font-display);font-weight:700;font-size:.95rem">${esc(p.name)}</div>
+                ${p.description?`<div style="font-size:.8rem;color:var(--text-sec);margin-top:2px">${esc(p.description)}</div>`:''}
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:80px" class="progress-track"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+                <span style="font-size:.82rem;font-weight:600;color:var(--text-sec);min-width:32px">${pct}%</span>
+                <button class="btn-icon" onclick="event.stopPropagation();openProjectModal('${p.id}')">${svgEdit}</button>
+                <button class="btn-icon danger" onclick="event.stopPropagation();deleteProject('${p.id}')">${svgTrash}</button>
+              </div>
+            </div>
+            ${exp?`<div class="project-body">
+              ${tasks.length===0?'<div style="padding:12px 0;font-size:.85rem;color:var(--text-sec)">Sin tareas asignadas</div>':
+                tasks.map(t=>`<div class="item-row" style="padding:8px 0">
+                  <div style="width:8px;height:8px;border-radius:4px;background:${t.status==='Completado'?'#10b981':t.status==='En progreso'?'#f59e0b':'var(--border)'}"></div>
+                  <span style="flex:1;font-size:.85rem;${t.status==='Completado'?'text-decoration:line-through;opacity:.6':''}">${esc(t.title)}</span>
+                  <span style="font-size:.75rem;color:var(--text-sec)">${t.status}</span>
+                </div>`).join('')}
+            </div>`:''}
+          </div>`;
+      }).join('')}
+  `;
+}
+
+function openProjectModal(editId) {
+  const p = editId ? DATA.projects.find(x=>x.id===editId) : null;
+  openModal(`
+    <div class="modal-header"><h3>${p?'Editar proyecto':'Nuevo proyecto'}</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Nombre</label><input id="mPName" value="${p?esc(p.name):''}" placeholder="Nombre del proyecto"></div>
+    <div class="field"><label>Descripción</label><textarea id="mPDesc" placeholder="Descripción">${p?esc(p.description):''}</textarea></div>
+    <div class="field"><label>Estado</label><select id="mPStatus">
+      ${['En progreso','En pausa','Completado'].map(s=>`<option${p&&p.status===s?' selected':''}>${s}</option>`).join('')}
+    </select></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProject('${editId||''}')">${p?'Guardar':'Crear'}</button>
+    </div>
+  `);
+}
+function saveProject(editId) {
+  const name = document.getElementById('mPName').value.trim(); if(!name) return;
+  const obj = {name,description:document.getElementById('mPDesc').value,status:document.getElementById('mPStatus').value};
+  if(editId) DATA.projects = DATA.projects.map(p=>p.id===editId?{...p,...obj}:p);
+  else DATA.projects.push({...obj,id:uid()});
+  saveData(); closeModal(); renderProjects();
+}
+function deleteProject(id) {
+  DATA.projects = DATA.projects.filter(p=>p.id!==id);
+  DATA.tasks = DATA.tasks.map(t=>t.projectId===id?{...t,projectId:''}:t);
+  saveData(); renderProjects();
+}
+
+// ═══════════════════════════════════════════
+// MEALS
+// ═══════════════════════════════════════════
+let mealDate = todayStr();
+function renderMeals() {
+  const el = document.getElementById('page-meals');
+  const dayMeals = DATA.meals.filter(m=>m.date===mealDate);
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <input type="date" value="${mealDate}" onchange="mealDate=this.value;renderMeals()" style="padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-family:var(--font-body);font-size:.9rem">
+      <button class="btn btn-primary" onclick="openMealModal()">${svgPlus} Agregar comida</button>
+    </div>
+    <div class="grid grid-2">
+      ${MEAL_TYPES.map(type => {
+        const items = dayMeals.filter(m=>m.type===type);
+        return `<div class="meal-section">
+          <h4>${MEAL_ICONS[type]} ${type}</h4>
+          ${items.length===0?'<div style="font-size:.85rem;color:var(--text-sec);padding:8px 0">Sin elementos</div>':
+            items.map(m=>`
+              <div class="item-row" style="padding:8px 0">
+                <div class="checkbox${m.available?' checked':''}" onclick="toggleMealAvail('${m.id}')">${m.available?svgCheck:''}</div>
+                <span style="flex:1;font-size:.88rem">${esc(m.name)}</span>
+                <span style="font-size:.75rem;font-weight:600;color:${m.available?'#10b981':'#ef4444'}">${m.available?'Disponible':'No disponible'}</span>
+                <button class="btn-icon danger" onclick="deleteMeal('${m.id}')">${svgX}</button>
+              </div>
+            `).join('')}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+function openMealModal() {
+  openModal(`
+    <div class="modal-header"><h3>Agregar comida</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Tipo</label><select id="mMType">${MEAL_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+    <div class="field"><label>Nombre</label><input id="mMName" placeholder="Ej: Arroz con pollo"></div>
+    <div class="field"><label class="field-check"><input type="checkbox" id="mMAvail" checked> Disponible en refrigerador</label></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMeal()">Agregar</button>
+    </div>
+  `);
+}
+function saveMeal() {
+  const name = document.getElementById('mMName').value.trim(); if(!name) return;
+  DATA.meals.push({id:uid(),date:mealDate,type:document.getElementById('mMType').value,name,available:document.getElementById('mMAvail').checked});
+  saveData(); closeModal(); renderMeals();
+}
+function toggleMealAvail(id) { DATA.meals = DATA.meals.map(m=>m.id===id?{...m,available:!m.available}:m); saveData(); renderMeals(); }
+function deleteMeal(id) { DATA.meals = DATA.meals.filter(m=>m.id!==id); saveData(); renderMeals(); }
+
+// ═══════════════════════════════════════════
+// GYM
+// ═══════════════════════════════════════════
+function renderGym() {
+  const el = document.getElementById('page-gym');
+  const hasDays = DAYS.some(d => DATA.routines.some(r=>r.day===d));
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+      <button class="btn btn-primary" onclick="openRoutineModal()">${svgPlus} Nueva rutina</button>
+    </div>
+    ${!hasDays?'<div class="empty"><div class="empty-icon">💪</div><div class="empty-text">No hay rutinas</div></div>':
+      `<div class="grid grid-2">${DAYS.map(day => {
+        const routs = DATA.routines.filter(r=>r.day===day);
+        if(!routs.length) return '';
+        return `<div class="card">
+          <div class="card-title">📅 ${day}</div>
+          ${routs.map(r=>`
+            <div class="routine-card">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                <div class="checkbox${r.completed?' checked':''}" onclick="toggleRoutine('${r.id}')">${r.completed?svgCheck:''}</div>
+                <span style="flex:1;font-weight:600;font-size:.9rem">${esc(r.name)}</span>
+                <button class="btn-icon" onclick="openExerciseModal('${r.id}')" title="Agregar ejercicio" style="color:#8b5cf6">${svgPlus}</button>
+                <button class="btn-icon" onclick="openRoutineModal('${r.id}')">${svgEdit}</button>
+                <button class="btn-icon danger" onclick="deleteRoutine('${r.id}')">${svgTrash}</button>
+              </div>
+              ${(r.exercises||[]).map(ex=>`
+                <div class="exercise-row">
+                  <span style="color:var(--text-dim)">•</span>
+                  <span style="flex:1">${esc(ex.name)}</span>
+                  ${ex.sets?`<span>${ex.sets}×${ex.reps||''}</span>`:''}
+                  <button class="btn-icon danger" style="width:22px;height:22px" onclick="deleteExercise('${r.id}','${ex.id}')">${svgX}</button>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>`;
+      }).join('')}</div>`}
+  `;
+}
+function openRoutineModal(editId) {
+  const r = editId ? DATA.routines.find(x=>x.id===editId) : null;
+  openModal(`
+    <div class="modal-header"><h3>${r?'Editar rutina':'Nueva rutina'}</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Nombre</label><input id="mRName" value="${r?esc(r.name):''}" placeholder="Ej: Día de pierna"></div>
+    <div class="field"><label>Día</label><select id="mRDay">${DAYS.map(d=>`<option${r&&r.day===d?' selected':''}>${d}</option>`).join('')}</select></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRoutine('${editId||''}')">${r?'Guardar':'Crear'}</button>
+    </div>
+  `);
+}
+function saveRoutine(editId) {
+  const name = document.getElementById('mRName').value.trim(); if(!name) return;
+  const obj = {name,day:document.getElementById('mRDay').value};
+  if(editId) DATA.routines = DATA.routines.map(r=>r.id===editId?{...r,...obj}:r);
+  else DATA.routines.push({...obj,id:uid(),exercises:[],completed:false});
+  saveData(); closeModal(); renderGym();
+}
+function toggleRoutine(id) { DATA.routines = DATA.routines.map(r=>r.id===id?{...r,completed:!r.completed}:r); saveData(); renderGym(); }
+function deleteRoutine(id) { DATA.routines = DATA.routines.filter(r=>r.id!==id); saveData(); renderGym(); }
+
+function openExerciseModal(routineId) {
+  openModal(`
+    <div class="modal-header"><h3>Agregar ejercicio</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Ejercicio</label><input id="mExName" placeholder="Ej: Sentadilla"></div>
+    <div class="field-row">
+      <div class="field"><label>Series</label><input id="mExSets" placeholder="4"></div>
+      <div class="field"><label>Repeticiones</label><input id="mExReps" placeholder="12"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveExercise('${routineId}')">Agregar</button>
+    </div>
+  `);
+}
+function saveExercise(routineId) {
+  const name = document.getElementById('mExName').value.trim(); if(!name) return;
+  DATA.routines = DATA.routines.map(r => r.id===routineId ? {...r, exercises:[...(r.exercises||[]),{id:uid(),name,sets:document.getElementById('mExSets').value,reps:document.getElementById('mExReps').value}]} : r);
+  saveData(); closeModal(); renderGym();
+}
+function deleteExercise(rId,eId) {
+  DATA.routines = DATA.routines.map(r => r.id===rId ? {...r,exercises:(r.exercises||[]).filter(e=>e.id!==eId)} : r);
+  saveData(); renderGym();
+}
+
+// ═══════════════════════════════════════════
+// FINANCE
+// ═══════════════════════════════════════════
+function renderFinance() {
+  const el = document.getElementById('page-finance');
+  const income = DATA.finances.filter(f=>f.type==='Ingreso').reduce((s,f)=>s+f.amount,0);
+  const expense = DATA.finances.filter(f=>f.type==='Gasto').reduce((s,f)=>s+f.amount,0);
+  const bal = income - expense;
+  const cm = currentMonth();
+  const monthBudgets = DATA.budgets.filter(b=>b.month===cm);
+
+  el.innerHTML = `
+    <div class="grid grid-3" style="margin-bottom:20px">
+      <div class="card"><div style="font-size:.82rem;color:var(--text-sec);margin-bottom:4px">Ingresos totales</div><div style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:#10b981">+$${income.toFixed(2)}</div></div>
+      <div class="card"><div style="font-size:.82rem;color:var(--text-sec);margin-bottom:4px">Gastos totales</div><div style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:#ef4444">-$${expense.toFixed(2)}</div></div>
+      <div class="card"><div style="font-size:.82rem;color:var(--text-sec);margin-bottom:4px">Balance</div><div style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:${bal>=0?'#10b981':'#ef4444'}">$${bal.toFixed(2)}</div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px">
+      <button class="btn btn-primary" onclick="openFinanceModal()">${svgPlus} Nueva transacción</button>
+      <button class="btn btn-secondary" onclick="openBudgetModal()">🎯 Presupuesto</button>
+    </div>
+    ${monthBudgets.length?`
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Presupuesto del mes</div>
+        ${monthBudgets.map(b => {
+          const spent = DATA.finances.filter(f=>f.type==='Gasto'&&f.category===b.category&&(f.date||'').startsWith(cm)).reduce((s,f)=>s+f.amount,0);
+          const pct = b.amount ? Math.min(Math.round(spent/b.amount*100),100) : 0;
+          return `<div class="budget-item">
+            <div class="budget-meta"><span>${b.category}</span><span>$${spent.toFixed(2)} / $${b.amount.toFixed(2)} (${pct}%)</span></div>
+            <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${pct>90?'#ef4444':pct>70?'#f59e0b':'#10b981'}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    `:''}
+    <div class="card">
+      <div class="card-title">Transacciones</div>
+      ${DATA.finances.length===0?'<div class="empty"><div class="empty-text">Sin transacciones</div></div>':
+        DATA.finances.slice().reverse().map(f=>`
+          <div class="item-row">
+            <span style="font-size:1.3rem">${f.type==='Ingreso'?'📈':(CAT_ICONS[f.category]||'📦')}</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:.9rem">${esc(f.description)}</div>
+              <div style="font-size:.78rem;color:var(--text-sec)">${f.type==='Ingreso'?esc(f.source||''):esc(f.category)} · ${f.date} ${f.account?'· '+esc(f.account):''}</div>
+            </div>
+            <span style="font-weight:700;margin-right:8px;color:${f.type==='Ingreso'?'#10b981':'#ef4444'}">${f.type==='Ingreso'?'+':'-'}$${f.amount.toFixed(2)}</span>
+            <button class="btn-icon" onclick="openFinanceModal('${f.id}')">${svgEdit}</button>
+            <button class="btn-icon danger" onclick="deleteFinance('${f.id}')">${svgTrash}</button>
+          </div>
+        `).join('')}
+    </div>
+  `;
+}
+
+function openFinanceModal(editId) {
+  const f = editId ? DATA.finances.find(x=>x.id===editId) : null;
+  openModal(`
+    <div class="modal-header"><h3>${f?'Editar transacción':'Nueva transacción'}</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Tipo</label><select id="mFType" onchange="toggleFinFields()">
+      <option value="Gasto"${f&&f.type==='Gasto'?' selected':''}>Gasto</option>
+      <option value="Ingreso"${f&&f.type==='Ingreso'?' selected':''}>Ingreso</option>
+    </select></div>
+    <div class="field"><label>Descripción</label><input id="mFDesc" value="${f?esc(f.description):''}" placeholder="Descripción"></div>
+    <div class="field-row">
+      <div class="field"><label>Monto</label><input type="number" step="0.01" id="mFAmount" value="${f?f.amount:''}" placeholder="0.00"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="mFDate" value="${f?f.date:todayStr()}"></div>
+    </div>
+    <div id="finGasto" class="field"><label>Categoría</label><select id="mFCat">${EXP_CATS.map(c=>`<option${f&&f.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
+    <div id="finIngreso" class="field" style="display:none"><label>Fuente</label><input id="mFSource" value="${f?esc(f.source||''):''}" placeholder="Ej: Salario"></div>
+    <div class="field"><label>Cuenta</label><input id="mFAccount" value="${f?esc(f.account||''):''}" placeholder="Ej: Banco, Efectivo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFinance('${editId||''}')">${f?'Guardar':'Crear'}</button>
+    </div>
+  `);
+  toggleFinFields();
+}
+function toggleFinFields() {
+  const t = document.getElementById('mFType').value;
+  document.getElementById('finGasto').style.display = t==='Gasto'?'block':'none';
+  document.getElementById('finIngreso').style.display = t==='Ingreso'?'block':'none';
+}
+function saveFinance(editId) {
+  const desc = document.getElementById('mFDesc').value.trim(); if(!desc) return;
+  const amt = parseFloat(document.getElementById('mFAmount').value); if(!amt) return;
+  const obj = {
+    type:document.getElementById('mFType').value,description:desc,amount:amt,
+    date:document.getElementById('mFDate').value,
+    category:document.getElementById('mFCat').value,
+    source:document.getElementById('mFSource')?.value||'',
+    account:document.getElementById('mFAccount').value
+  };
+  if(editId) DATA.finances = DATA.finances.map(f=>f.id===editId?{...f,...obj}:f);
+  else DATA.finances.push({...obj,id:uid()});
+  saveData(); closeModal(); renderFinance();
+}
+function deleteFinance(id) { DATA.finances = DATA.finances.filter(f=>f.id!==id); saveData(); renderFinance(); }
+
+function openBudgetModal() {
+  openModal(`
+    <div class="modal-header"><h3>Definir presupuesto</h3><button class="modal-close" onclick="closeModal()">${svgX}</button></div>
+    <div class="field"><label>Mes</label><input type="month" id="mBMonth" value="${currentMonth()}"></div>
+    <div class="field"><label>Categoría</label><select id="mBCat">${EXP_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="field"><label>Monto presupuesto</label><input type="number" step="0.01" id="mBAmount" placeholder="0.00"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBudget()">Guardar</button>
+    </div>
+  `);
+}
+function saveBudget() {
+  const month = document.getElementById('mBMonth').value;
+  const cat = document.getElementById('mBCat').value;
+  const amt = parseFloat(document.getElementById('mBAmount').value); if(!month||!amt) return;
+  DATA.budgets = DATA.budgets.filter(b=>!(b.month===month&&b.category===cat));
+  DATA.budgets.push({id:uid(),month,category:cat,amount:amt});
+  saveData(); closeModal(); renderFinance();
+}
+
+// ═══════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════
+let analyticsCharts = [];
+function renderAnalytics() {
+  analyticsCharts.forEach(c=>c.destroy()); analyticsCharts=[];
+  const el = document.getElementById('page-analytics');
+
+  el.innerHTML = `
+    <div class="analytics-grid">
+      <div class="card"><div class="card-title">Tareas por etiqueta</div><div class="chart-wrap"><canvas id="aTagPie"></canvas></div></div>
+      <div class="card"><div class="card-title">Tareas por estado</div><div class="chart-wrap"><canvas id="aStatusBar"></canvas></div></div>
+      <div class="card"><div class="card-title">Progreso de proyectos</div><div class="chart-wrap"><canvas id="aProjBar"></canvas></div></div>
+      <div class="card"><div class="card-title">Gimnasio: cumplimiento</div><div class="chart-wrap"><canvas id="aGymBar"></canvas></div></div>
+      <div class="card"><div class="card-title">Comidas: consistencia</div><div class="chart-wrap"><canvas id="aMealLine"></canvas></div></div>
+      <div class="card"><div class="card-title">Ingresos vs Gastos</div><div class="chart-wrap"><canvas id="aFinBar"></canvas></div></div>
+      <div class="card analytics-full"><div class="card-title">Distribución de gastos</div><div style="display:flex;align-items:center;gap:30px;flex-wrap:wrap"><div style="flex:0 0 260px"><div class="chart-wrap" style="height:240px"><canvas id="aExpPie"></canvas></div></div><div id="aExpLegend" style="flex:1;min-width:180px"></div></div></div>
+    </div>
+  `;
+
+  const cs = (v) => getCS(v);
+  const co = {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:cs('--text-sec'),font:{size:11}}}}};
+  const scaleOpts = {x:{ticks:{color:cs('--text-sec')},grid:{color:cs('--border')}},y:{ticks:{color:cs('--text-sec')},grid:{color:cs('--border')}}};
+
+  // Tags pie
+  if(DATA.tasks.length) {
+    analyticsCharts.push(new Chart(document.getElementById('aTagPie'),{type:'doughnut',data:{labels:TAGS,datasets:[{data:TAGS.map(t=>DATA.tasks.filter(k=>k.tag===t).length),backgroundColor:TAGS.map(t=>TAG_COLORS[t]),borderWidth:0}]},options:{...co,cutout:'55%'}}));
+  } else { noData('aTagPie'); }
+
+  // Status bar
+  if(DATA.tasks.length) {
+    analyticsCharts.push(new Chart(document.getElementById('aStatusBar'),{type:'bar',data:{labels:STATUSES,datasets:[{label:'Tareas',data:STATUSES.map(s=>DATA.tasks.filter(t=>t.status===s).length),backgroundColor:['#8b5cf6','#f59e0b','#10b981'],borderRadius:6}]},options:{...co,plugins:{legend:{display:false}},scales:scaleOpts}}));
+  } else { noData('aStatusBar'); }
+
+  // Project progress
+  if(DATA.projects.length) {
+    const pd = DATA.projects.map(p=>{const ts=DATA.tasks.filter(t=>t.projectId===p.id);const d=ts.filter(t=>t.status==='Completado').length;return{name:p.name.slice(0,12),pct:ts.length?Math.round(d/ts.length*100):0}});
+    analyticsCharts.push(new Chart(document.getElementById('aProjBar'),{type:'bar',data:{labels:pd.map(p=>p.name),datasets:[{label:'Progreso %',data:pd.map(p=>p.pct),backgroundColor:'#f97316',borderRadius:6}]},options:{...co,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{max:100,ticks:{color:cs('--text-sec')},grid:{color:cs('--border')}},y:{ticks:{color:cs('--text-sec')},grid:{color:cs('--border')}}}}}));
+  } else { noData('aProjBar'); }
+
+  // Gym compliance
+  if(DATA.routines.length) {
+    const gd = DAYS.map(d=>{const rs=DATA.routines.filter(r=>r.day===d);return{day:d.slice(0,3),plan:rs.length,done:rs.filter(r=>r.completed).length}});
+    analyticsCharts.push(new Chart(document.getElementById('aGymBar'),{type:'bar',data:{labels:gd.map(g=>g.day),datasets:[{label:'Planificados',data:gd.map(g=>g.plan),backgroundColor:'#a78bfa',borderRadius:6},{label:'Cumplidos',data:gd.map(g=>g.done),backgroundColor:'#10b981',borderRadius:6}]},options:{...co,scales:scaleOpts}}));
+  } else { noData('aGymBar'); }
+
+  // Meal consistency
+  const mealDates = [...new Set(DATA.meals.map(m=>m.date))].sort().slice(-7);
+  if(mealDates.length) {
+    analyticsCharts.push(new Chart(document.getElementById('aMealLine'),{type:'line',data:{labels:mealDates.map(d=>d.slice(5)),datasets:[{label:'Comidas',data:mealDates.map(d=>DATA.meals.filter(m=>m.date===d).length),borderColor:'#f472b6',backgroundColor:'#f472b620',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#f472b6'}]},options:{...co,plugins:{legend:{display:false}},scales:scaleOpts}}));
+  } else { noData('aMealLine'); }
+
+  // Income vs Expense monthly
+  const months = [...new Set(DATA.finances.map(f=>(f.date||'').slice(0,7)).filter(Boolean))].sort().slice(-6);
+  if(months.length) {
+    const md = months.map(m=>({m:m.slice(5),inc:DATA.finances.filter(f=>f.type==='Ingreso'&&(f.date||'').startsWith(m)).reduce((s,f)=>s+f.amount,0),exp:DATA.finances.filter(f=>f.type==='Gasto'&&(f.date||'').startsWith(m)).reduce((s,f)=>s+f.amount,0)}));
+    analyticsCharts.push(new Chart(document.getElementById('aFinBar'),{type:'bar',data:{labels:md.map(d=>d.m),datasets:[{label:'Ingresos',data:md.map(d=>d.inc),backgroundColor:'#10b981',borderRadius:6},{label:'Gastos',data:md.map(d=>d.exp),backgroundColor:'#ef4444',borderRadius:6}]},options:{...co,scales:scaleOpts}}));
+  } else { noData('aFinBar'); }
+
+  // Expense distribution
+  const expData = EXP_CATS.map((c,i)=>({name:c,value:DATA.finances.filter(f=>f.type==='Gasto'&&f.category===c).reduce((s,f)=>s+f.amount,0),color:CAT_COLORS[i]})).filter(e=>e.value>0);
+  if(expData.length) {
+    analyticsCharts.push(new Chart(document.getElementById('aExpPie'),{type:'doughnut',data:{labels:expData.map(e=>e.name),datasets:[{data:expData.map(e=>e.value),backgroundColor:expData.map(e=>e.color),borderWidth:0}]},options:{...co,cutout:'58%',plugins:{legend:{display:false}}}}));
+    const total = expData.reduce((s,e)=>s+e.value,0);
+    document.getElementById('aExpLegend').innerHTML = expData.map(e=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:10px;height:10px;border-radius:3px;background:${e.color};flex-shrink:0"></div>
+        <span style="flex:1;font-size:.85rem">${e.name}</span>
+        <span style="font-size:.85rem;font-weight:600">$${e.value.toFixed(2)}</span>
+        <span style="font-size:.8rem;color:var(--text-sec);min-width:32px;text-align:right">${Math.round(e.value/total*100)}%</span>
+      </div>
+    `).join('');
+  } else { noData('aExpPie'); document.getElementById('aExpLegend').innerHTML=''; }
+}
+
+function noData(canvasId) {
+  const c = document.getElementById(canvasId);
+  if(c) c.parentElement.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-text">Sin datos</div></div>';
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function esc(s) { const d=document.createElement('div');d.textContent=s||'';return d.innerHTML; }
+function getCS(v) { return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+(async function init() {
+  await loadData();
+  initNav();
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
